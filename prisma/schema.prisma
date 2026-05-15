@@ -29,6 +29,7 @@ model Server {
   region            String?             // "EU" | "NA" | "AS" | "OCE" | etc.
   tags              String              @default("[]") // JSON array of strings
   battlemetricsId   String?
+  connectUrl        String?             // "host:port" for client.connect / steam://connect
   lastWipeAt        DateTime?
   notes             String?
   schedules         WipeScheduleRule[]

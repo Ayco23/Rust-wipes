@@ -55,7 +55,7 @@ function Chip({
         "inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1 text-sm transition-colors",
         active
           ? "border-rust-600 bg-rust-600 text-white"
-          : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100",
+          : "border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800",
       )}
     >
       <input
@@ -79,7 +79,7 @@ function Group({
 }): React.JSX.Element {
   return (
     <div className="space-y-2">
-      <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
         {title}
       </h3>
       <div className="flex flex-wrap gap-2">{children}</div>
@@ -95,7 +95,10 @@ export function Filters({ value, onChange, hosts, regions }: FiltersProps): Reac
   return (
     <section
       aria-label="Filters"
-      className={cn("space-y-5 rounded-lg border border-neutral-200 bg-white p-4")}
+      className={cn(
+        "space-y-5 rounded-lg border border-neutral-200 bg-white p-4",
+        "dark:border-neutral-800 dark:bg-neutral-900",
+      )}
     >
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold">Filters</h2>
@@ -106,8 +109,8 @@ export function Filters({ value, onChange, hosts, regions }: FiltersProps): Reac
           className={cn(
             "rounded-md border px-2 py-1 text-xs font-medium transition-colors",
             totalSelected === 0
-              ? "cursor-not-allowed border-neutral-200 text-neutral-400"
-              : "border-neutral-300 text-neutral-700 hover:bg-neutral-100",
+              ? "cursor-not-allowed border-neutral-200 text-neutral-400 dark:border-neutral-800 dark:text-neutral-600"
+              : "border-neutral-300 text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-200 dark:hover:bg-neutral-800",
           )}
         >
           Clear all
@@ -145,11 +148,9 @@ export function Filters({ value, onChange, hosts, regions }: FiltersProps): Reac
         ))}
       </Group>
 
-      <Group title="Host">
-        {hosts.length === 0 ? (
-          <span className="text-sm text-neutral-400">No hosts available</span>
-        ) : (
-          hosts.map((h) => (
+      {hosts.length > 0 && (
+        <Group title="Host">
+          {hosts.map((h) => (
             <Chip
               key={h.id}
               active={value.hostIds.includes(h.id)}
@@ -160,13 +161,13 @@ export function Filters({ value, onChange, hosts, regions }: FiltersProps): Reac
             >
               {h.name}
             </Chip>
-          ))
-        )}
-      </Group>
+          ))}
+        </Group>
+      )}
 
       <Group title="Region">
         {regions.length === 0 ? (
-          <span className="text-sm text-neutral-400">No regions available</span>
+          <span className="text-sm text-neutral-400 dark:text-neutral-500">No regions available</span>
         ) : (
           regions.map((r) => (
             <Chip

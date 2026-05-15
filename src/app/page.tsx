@@ -5,8 +5,8 @@ import { addMonths, endOfMonth, format, startOfMonth, subMonths } from "date-fns
 import { CalendarMonth } from "@/components/CalendarMonth";
 import { DayDetail } from "@/components/DayDetail";
 import { Filters, type FilterState } from "@/components/Filters";
-import { ServerPicker } from "@/components/ServerPicker";
-import { useSelectedServers } from "@/lib/useSelectedServers";
+import { HostPicker } from "@/components/HostPicker";
+import { useSelectedHosts } from "@/lib/useSelectedHosts";
 import type { PlayerRestriction, ServerType, WipeEvent } from "@/types/wipes";
 
 type PickerServer = {
@@ -33,16 +33,15 @@ function buildQuery(
   from: Date,
   to: Date,
   filters: FilterState,
-  serverIds: string[],
+  hostIds: string[],
 ): string {
   const params = new URLSearchParams();
   params.set("from", from.toISOString());
   params.set("to", to.toISOString());
   for (const t of filters.types) params.append("types", t);
   for (const r of filters.restrictions) params.append("restrictions", r);
-  for (const h of filters.hostIds) params.append("hostIds", h);
   for (const reg of filters.regions) params.append("regions", reg);
-  for (const s of serverIds) params.append("serverIds", s);
+  for (const h of hostIds) params.append("hostIds", h);
   return params.toString();
 }
 
@@ -60,8 +59,8 @@ export default function HomePage(): React.JSX.Element {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const { selected: selectedSet, isReady } = useSelectedServers();
-  const selectedServerIds = useMemo(() => Array.from(selectedSet), [selectedSet]);
+  const { selected: selectedSet, toggle: toggleHost, isReady } = useSelectedHosts();
+  const selectedHostIds = useMemo(() => Array.from(selectedSet), [selectedSet]);
 
   // Load servers from the CRUD API.
   useEffect(() => {
@@ -92,10 +91,14 @@ export default function HomePage(): React.JSX.Element {
     };
   }, []);
 
-  const hostsForFilter = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const s of servers) map.set(s.hostId, s.hostName);
-    return Array.from(map, ([id, name]) => ({ id, name }));
+  const hostsForPicker = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; serverCount: number }>();
+    for (const s of servers) {
+      const existing = map.get(s.hostId);
+      if (existing) existing.serverCount += 1;
+      else map.set(s.hostId, { id: s.hostId, name: s.hostName, serverCount: 1 });
+    }
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [servers]);
 
   const regionsForFilter = useMemo(() => {
@@ -110,7 +113,7 @@ export default function HomePage(): React.JSX.Element {
     try {
       const from = startOfMonth(month);
       const to = endOfMonth(month);
-      const qs = buildQuery(from, to, filters, selectedServerIds);
+      const qs = buildQuery(from, to, filters, selectedHostIds);
       const res = await fetch(`/api/wipes?${qs}`);
       if (!res.ok) {
         setEvents([]);
@@ -124,7 +127,7 @@ export default function HomePage(): React.JSX.Element {
     } finally {
       setLoading(false);
     }
-  }, [month, filters, selectedServerIds, isReady]);
+  }, [month, filters, selectedHostIds, isReady]);
 
   useEffect(() => {
     void fetchWipes();
@@ -180,9 +183,14 @@ export default function HomePage(): React.JSX.Element {
         <aside className="space-y-6">
           <section>
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-neutral-500">
-              Servers
+              Hosts
             </h2>
-            <ServerPicker servers={servers} />
+            <HostPicker
+              hosts={hostsForPicker}
+              selected={selectedSet}
+              onToggle={toggleHost}
+              isReady={isReady}
+            />
           </section>
           <section>
             <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-neutral-500">
@@ -191,7 +199,7 @@ export default function HomePage(): React.JSX.Element {
             <Filters
               value={filters}
               onChange={setFilters}
-              hosts={hostsForFilter}
+              hosts={[]}
               regions={regionsForFilter}
             />
           </section>
@@ -206,8 +214,8 @@ export default function HomePage(): React.JSX.Element {
           {!loading && events.length === 0 && (
             <div className="mb-2 text-xs text-neutral-500">
               No wipes match your filters in {format(month, "MMMM yyyy")}.
-              {selectedServerIds.length === 0 && servers.length > 0 && (
-                <> Select some servers in the sidebar to get started.</>
+              {selectedHostIds.length === 0 && hostsForPicker.length > 0 && (
+                <> Select some hosts in the sidebar to get started.</>
               )}
             </div>
           )}

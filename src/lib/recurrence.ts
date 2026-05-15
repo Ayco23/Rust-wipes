@@ -139,5 +139,6 @@ function buildEvent(
     occursAt,
     kind,
     label,
+    connectUrl: server.connectUrl ?? null,
   };
 }

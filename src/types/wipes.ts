@@ -35,6 +35,7 @@ export const ServerSchema = z.object({
   region: z.string().nullable().optional(),
   tags: z.array(z.string()).default([]),
   battlemetricsId: z.string().nullable().optional(),
+  connectUrl: z.string().nullable().optional(),
   lastWipeAt: z.coerce.date().nullable().optional(),
   notes: z.string().nullable().optional(),
 });
@@ -72,6 +73,7 @@ export const WipeEventSchema = z.object({
   occursAt: z.coerce.date(),
   kind: ScheduleKind,
   label: z.string().nullable().optional(),
+  connectUrl: z.string().nullable().optional(),
 });
 export type WipeEvent = z.infer<typeof WipeEventSchema>;
 

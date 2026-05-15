@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import { cn } from "@/lib/cn";
 import type { WipeEvent } from "@/types/wipes";
@@ -35,6 +35,36 @@ const kindBadgeClass: Record<WipeEvent["kind"], string> = {
   forced: "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200",
   custom: "bg-neutral-200 text-neutral-800 dark:bg-neutral-700 dark:text-neutral-100",
 };
+
+function ConnectAddress({ address }: { address: string }) {
+  const [copied, setCopied] = useState(false);
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(`client.connect ${address}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard API unavailable — no fallback worth the complexity
+    }
+  }
+  return (
+    <p className="mt-1 flex items-center gap-2 text-xs">
+      <span className="font-mono text-neutral-700 dark:text-neutral-300">{address}</span>
+      <button
+        type="button"
+        onClick={copy}
+        className={cn(
+          "rounded border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide transition-colors",
+          copied
+            ? "border-green-500 text-green-600 dark:border-green-400 dark:text-green-400"
+            : "border-neutral-300 text-neutral-600 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800",
+        )}
+      >
+        {copied ? "Copied" : "Copy"}
+      </button>
+    </p>
+  );
+}
 
 function Badge({ className, children }: { className?: string; children: React.ReactNode }) {
   return (
@@ -81,7 +111,7 @@ export function DayDetail({ open, onClose, date, wipes }: DayDetailProps) {
         <header className="flex items-center justify-between border-b border-neutral-200 p-4 dark:border-neutral-800">
           <div>
             <h2 className="text-lg font-semibold">
-              {date ? format(date, "EEEE, MMM d, yyyy") : "No date selected"}
+              {date ? format(date, "EEEE, d MMM yyyy") : "No date selected"}
             </h2>
             <p className="text-sm text-neutral-500">
               {wipes.length} {wipes.length === 1 ? "wipe" : "wipes"} scheduled
@@ -107,7 +137,7 @@ export function DayDetail({ open, onClose, date, wipes }: DayDetailProps) {
               {grouped.map(([hour, hourWipes]) => (
                 <li key={hour}>
                   <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                    {format(new Date().setHours(hour, 0, 0, 0), "h:00 a")}
+                    {format(new Date().setHours(hour, 0, 0, 0), "HH:00")}
                   </h3>
                   <ul className="space-y-3">
                     {hourWipes.map((w) => (
@@ -121,10 +151,11 @@ export function DayDetail({ open, onClose, date, wipes }: DayDetailProps) {
                             dateTime={w.occursAt.toISOString()}
                             className="text-xs text-neutral-500"
                           >
-                            {format(w.occursAt, "h:mm a")}
+                            {format(w.occursAt, "HH:mm")}
                           </time>
                         </div>
                         <p className="text-xs text-neutral-500">{w.hostName}</p>
+                        {w.connectUrl && <ConnectAddress address={w.connectUrl} />}
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           <Badge className={typeBadgeClass[w.type]}>{w.type}</Badge>
                           {w.playerRestriction !== "none" && (

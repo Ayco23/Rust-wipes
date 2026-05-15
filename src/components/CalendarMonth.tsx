@@ -12,7 +12,7 @@ import { useMemo } from "react";
 import { cn } from "@/lib/cn";
 import type { ServerType, WipeEvent } from "@/types/wipes";
 
-const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 const MAX_PILLS_PER_CELL = 3;
 const TOTAL_CELLS = 42;
 
@@ -33,11 +33,17 @@ interface DayCell {
   date: Date;
   inMonth: boolean;
   isToday: boolean;
+  isForceWipe: boolean;
   events: WipeEvent[];
 }
 
+// Facepunch's monthly force wipe lands on the 1st Thursday of every month.
+function isForceWipeDay(d: Date): boolean {
+  return d.getDay() === 4 && d.getDate() <= 7;
+}
+
 function buildCells(month: Date, wipes: WipeEvent[]): DayCell[] {
-  const gridStart = startOfWeek(startOfMonth(month));
+  const gridStart = startOfWeek(startOfMonth(month), { weekStartsOn: 1 });
   const today = startOfDay(new Date());
 
   const eventsByDay = new Map<number, WipeEvent[]>();
@@ -58,6 +64,7 @@ function buildCells(month: Date, wipes: WipeEvent[]): DayCell[] {
       date,
       inMonth: isSameMonth(date, month),
       isToday: isSameDay(date, today),
+      isForceWipe: isForceWipeDay(date),
       events: eventsByDay.get(startOfDay(date).getTime()) ?? [],
     });
   }
@@ -109,17 +116,28 @@ export function CalendarMonth({
                 "flex min-h-[6rem] flex-col gap-1 border-b border-r border-neutral-200 p-1 text-left transition-colors dark:border-neutral-800",
                 "hover:bg-neutral-100/70 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:hover:bg-neutral-900/70",
                 !cell.inMonth && "bg-neutral-50/60 text-neutral-400 dark:bg-neutral-950/40 dark:text-neutral-600",
+                cell.isForceWipe && cell.inMonth && "bg-red-50/70 dark:bg-red-950/30",
                 isSelected && "ring-2 ring-sky-500",
               )}
             >
-              <span
-                className={cn(
-                  "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
-                  cell.isToday && "bg-sky-600 text-white",
+              <div className="flex items-center justify-between">
+                <span
+                  className={cn(
+                    "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium",
+                    cell.isToday && "bg-sky-600 text-white",
+                  )}
+                >
+                  {cell.date.getDate()}
+                </span>
+                {cell.isForceWipe && (
+                  <span
+                    title="Facepunch monthly force wipe (1st Thursday)"
+                    className="rounded bg-red-600 px-1 text-[9px] font-bold uppercase tracking-wide text-white"
+                  >
+                    Force
+                  </span>
                 )}
-              >
-                {cell.date.getDate()}
-              </span>
+              </div>
               <ul className="flex flex-col gap-0.5">
                 {cell.events.slice(0, MAX_PILLS_PER_CELL).map((event, idx) => (
                   <li

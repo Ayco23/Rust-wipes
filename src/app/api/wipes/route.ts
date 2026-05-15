@@ -7,7 +7,7 @@ import {
   WipeEventSchema,
   WipeQuerySchema,
 } from "@/types/wipes";
-import { projectStub } from "@/lib/_wipesProject";
+import { projectWipes } from "@/lib/recurrence";
 
 export const dynamic = "force-dynamic";
 
@@ -62,28 +62,34 @@ export async function GET(request: Request): Promise<NextResponse> {
   });
 
   const allEvents = servers.flatMap((s) =>
-    projectStub({
+    projectWipes({
       server: {
         id: s.id,
-        name: s.name,
         hostId: s.hostId,
+        name: s.name,
         type: ServerType.parse(s.type),
         playerRestriction: PlayerRestriction.parse(s.playerRestriction),
         region: s.region,
-        host: { id: s.host.id, name: s.host.name },
-        schedules: s.schedules.map((r) => ({
-          rrule: r.rrule,
-          dtstart: r.dtstart,
-          timezone: r.timezone,
-          kind: ScheduleKind.parse(r.kind),
-          label: r.label,
-        })),
-        overrides: s.overrides.map((o) => ({
-          occursAt: o.occursAt,
-          skip: o.skip,
-          label: o.label,
-        })),
+        tags: [],
+        connectUrl: s.connectUrl,
       },
+      host: { id: s.host.id, name: s.host.name },
+      rules: s.schedules.map((r) => ({
+        id: r.id,
+        serverId: r.serverId,
+        rrule: r.rrule,
+        dtstart: r.dtstart,
+        timezone: r.timezone,
+        kind: ScheduleKind.parse(r.kind),
+        label: r.label,
+      })),
+      overrides: s.overrides.map((o) => ({
+        id: o.id,
+        serverId: o.serverId,
+        occursAt: o.occursAt,
+        skip: o.skip,
+        label: o.label,
+      })),
       from: q.from,
       to: q.to,
     }),
