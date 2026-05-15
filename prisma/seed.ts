@@ -97,7 +97,8 @@ const CONNECT_URLS: Record<string, string> = {
   // Enjoy (BM-sourced 2026-05-15)
   "seed-enjoy-solo-monthly": "176.9.112.88:28036",
   "seed-enjoy-solo-duo": "176.9.112.88:28026",
-  // Lagoon: no IP provided — left blank intentionally.
+  // Lagoon (BM-sourced 2026-05-15)
+  "seed-lagoon-eu-trio": "168.100.161.159:28010",
 };
 
 // BestRust: 1st Thursday of the month at 19:45 CEST (= 17:45 UTC).
