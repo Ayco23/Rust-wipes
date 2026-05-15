@@ -63,7 +63,7 @@ prisma/seed.ts                Idempotent seed: 6 hosters, 17 servers, 27 rules
 - Don't write comments that just describe what the code does. Comment only on non-obvious why (constraints, invariants, workarounds).
 - Don't add features beyond what's asked. No premature abstractions, no scaffolded "for later" hooks.
 - Don't create README/docs files unless asked. (This `CLAUDE.md` is the memory file — extending it is fine when the user asks for memory updates.)
-- Branch convention: this repo's primary work branch is `claude/rust-wipe-calendar-O1JNL`. There may not be a `main` yet — check before merging there.
+- Branch convention: `main` is the trunk and the Vercel production branch. See "Branching & deployment workflow" below.
 
 ## How to run / verify
 
@@ -78,9 +78,38 @@ npm run build        # must succeed cleanly (catches type + SSR errors)
 
 `RUN_LOCALLY.md` is a user-facing runbook intended to be handed to a fresh Claude Code session running on the user's local machine. Don't treat it as canonical — this file (`CLAUDE.md`) is.
 
+## Branching & deployment workflow
+
+The app is deployed to Vercel at https://whats-wiping.vercel.app, backed by a Neon Postgres database. Every push to `main` triggers a production deploy in ~90s. Every push to any other branch creates a free preview deploy at its own `*.vercel.app` URL.
+
+**Default: push straight to `main`.** It's a single-developer hobby project; the friction of branches + PRs isn't worth it for the typical change (adding a server, fixing a bug, tweaking UI). Just commit and push.
+
+**Use a feature branch only when the change is genuinely risky:**
+- It might break the live site mid-implementation (multi-session work, big refactors).
+- It requires DB schema changes (see below).
+- The user explicitly asks for a preview before merging.
+
+Branch naming when needed: `feat/<thing>` (e.g. `feat/llm-ingest`). Open a PR, squash-merge into `main`, delete the branch. Vercel auto-comments the preview URL on the PR.
+
+**Impact of pushing to `main` — be aware of:**
+- **Schema changes are the only thing that can really break production.** `prisma/schema.prisma` is committed to git and Vercel will deploy whatever's in it. If you push a schema change without first running `prisma db push` against the prod Neon URL, the build will succeed but every API request will 500 because the running DB doesn't match the generated Prisma client. **Always:** push schema → wait → `npx prisma db push` against Neon → then push the code change. Or batch them: schema change + `db push` + code change in one go.
+- **`prisma generate` runs during Vercel's build** (configured in `package.json`'s `build` and `postinstall`). Don't remove it; Vercel caches `node_modules` and would otherwise serve a stale client.
+- **`.env` is gitignored — never commit it.** Same for any file containing the Neon password or `BATTLEMETRICS_TOKEN`. Env vars for production live in Vercel project settings.
+- **Seed data lives in `prisma/seed.ts` and is NOT auto-run by Vercel.** Pushing seed changes doesn't update production data. To re-seed prod, the user runs `npm run seed` locally with `DATABASE_URL` pointing at Neon.
+- **Tests are not run in CI.** A broken test won't block a deploy. Type errors from `next build` will. Run `npm test` before pushing if you've touched anything tested.
+- **Vercel's free tier has serverless function limits** (10s execution, 4.5 MB request payload). The current `/api/wipes` projection comfortably fits, but long-running scripts (like `scripts/verify.ts`) must run as cron/CLI, never as a route handler.
+
+**Things that are safe to push directly:**
+- UI / component / styling changes.
+- Adding rows to `prisma/seed.ts` (won't affect prod until user re-seeds — which is a feature, not a bug; it lets you stage seed updates in code review).
+- New API routes that don't touch schema.
+- Changes to `scripts/verify.ts` and other dev tooling.
+
+**The `claude/rust-wipe-calendar-O1JNL` branch and 13 sibling `worktree-agent-*` / `feat/*` / `worker/*` branches were cleaned up post-deploy.** Don't recreate them — work from `main`.
+
 ## How this app got built (so you don't redo it)
 
-Built in one session via `/batch`-style parallel-worker orchestration: a shared scaffold was committed to `claude/rust-wipe-calendar-O1JNL`, then 13 isolated worktree agents each built one slice (recurrence, BM client, parser, /api/wipes, CRUD, calendar, day drawer, filters, picker, color, layout, seed, home composition) and opened a draft PR. The PRs were then **consolidated into a single integration commit** (`102b182`) on the same branch — file-level cherry-pick + manual reconciliation of `package.json`, `vitest.config.ts`, `src/app/layout.tsx`, and `src/app/page.tsx`. The 13 worker PRs were closed; their branches still exist on the remote and could be deleted (the user hasn't asked yet).
+Built in one session via `/batch`-style parallel-worker orchestration: a shared scaffold was committed to `claude/rust-wipe-calendar-O1JNL`, then 13 isolated worktree agents each built one slice (recurrence, BM client, parser, /api/wipes, CRUD, calendar, day drawer, filters, picker, color, layout, seed, home composition) and opened a draft PR. The PRs were then **consolidated into a single integration commit** (`102b182`) on the same branch — file-level cherry-pick + manual reconciliation of `package.json`, `vitest.config.ts`, `src/app/layout.tsx`, and `src/app/page.tsx`. The 13 worker PRs were closed and their branches were deleted from the remote (2026-05-15).
 
 If asked to "split this work in parallel again," remember: the truly independent slicing only works if there's a shared scaffold (types, db client, schema) committed first, AND each slice ships an isolated `/preview/<unit>` route so its PR is independently viewable. Greenfield "all parallel from empty" doesn't actually work cleanly — every PR will conflict on `package.json` etc.
 
@@ -95,8 +124,7 @@ If asked to "split this work in parallel again," remember: the truly independent
 
 ## Things to NOT do without asking
 
-- Don't change `prisma/schema.prisma` (migrations are not yet wired; SQLite db is push-only).
-- Don't push to a `main` branch (it may not exist; the user's primary branch is `claude/rust-wipe-calendar-O1JNL`).
+- Don't change `prisma/schema.prisma` without coordinating a DB push to Neon — see "Branching & deployment workflow" above. The schema is still push-only (no migration files); SQLite was swapped to Postgres on 2026-05-15.
 - Don't switch the data source to "scrape BattleMetrics for upcoming wipes" — see top of file.
 - Don't add a heavy auth/multi-tenant layer until the user asks; the picker selection is per-browser via localStorage by design.
 - Don't include the model identifier `claude-opus-4-7[1m]` in any commit message, PR body, code comment, or other artifact pushed to the repo. Chat replies only.
