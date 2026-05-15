@@ -9,3 +9,4 @@ dist
 prisma/*.db
 prisma/*.db-journal
 coverage
+.claude/
