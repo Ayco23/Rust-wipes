@@ -77,7 +77,9 @@ const CONNECT_URLS: Record<string, string> = {
   "seed-reddit-eu-monthly": "eu.monthly.rplayrust.com:28015",
   "seed-reddit-eu-small": "eu.small.rplayrust.com:28015",
   "seed-reddit-eu-trio": "eu.trio.rplayrust.com:28015",
-  // Rustafied, Enjoy, Lagoon: no IPs provided — left blank intentionally.
+  // Rustafied (BM-sourced; add more as we look them up)
+  "seed-rustafied-eu-friday": "195.60.166.150:28015",
+  // Enjoy, Lagoon: no IPs provided — left blank intentionally.
 };
 
 // BestRust: 1st Thursday of the month at 19:45 CEST (= 17:45 UTC).
@@ -666,7 +668,16 @@ const HOSTS: SeedHost[] = [
           playerRestriction: "none",
           region: "EU",
           tags: ["weekly", "friday"],
-          schedules: [wFri],
+          // EU Friday wipes at 17:00 London (BM-confirmed), not 15:00 like the others.
+          schedules: [
+            {
+              rrule: "FREQ=WEEKLY;BYDAY=FR;BYHOUR=17;BYMINUTE=0;BYSECOND=0",
+              timezone: "Europe/London",
+              kind: "weekly",
+              label: "Weekly wipe — Friday 17:00 London",
+              dtstart: RUSTAFIED_DTSTART,
+            },
+          ],
         },
         // Weekly Monday
         {
