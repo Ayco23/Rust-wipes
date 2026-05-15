@@ -77,8 +77,23 @@ const CONNECT_URLS: Record<string, string> = {
   "seed-reddit-eu-monthly": "eu.monthly.rplayrust.com:28015",
   "seed-reddit-eu-small": "eu.small.rplayrust.com:28015",
   "seed-reddit-eu-trio": "eu.trio.rplayrust.com:28015",
-  // Rustafied (BM-sourced; add more as we look them up)
+  // Rustafied (BM-sourced 2026-05-15)
   "seed-rustafied-eu-friday": "195.60.166.150:28015",
+  "seed-rustafied-eu-main": "195.60.166.128:28015",
+  "seed-rustafied-eu-mini": "64.40.9.41:28015",
+  "seed-rustafied-eu-solo": "64.40.9.138:28015",
+  "seed-rustafied-eus": "64.40.9.47:28015",
+  "seed-rustafied-eu-monday": "195.60.166.151:28015",
+  "seed-rustafied-eu-small-monday": "195.60.166.149:28015",
+  "seed-rustafied-eu-trio-monday": "64.40.9.32:28015",
+  "seed-rustafied-eu-medium-small": "64.40.9.2:28015",
+  "seed-rustafied-eu-medium-large": "195.60.166.148:28015",
+  "seed-rustafied-eu-trio": "195.60.166.152:28015",
+  "seed-rustafied-eu-long-large": "195.60.166.130:28015",
+  "seed-rustafied-eu-long-small-2": "64.40.9.70:28015",
+  "seed-rustafied-eu-lowpop": "64.40.9.34:28015",
+  // EU Long - Small: BM only finds "Long - Small II" — possibly retired. Left blank.
+  // EU Small: BM doesn't list a Rustafied EU Small — possibly retired. Left blank.
   // Enjoy, Lagoon: no IPs provided — left blank intentionally.
 };
 
@@ -604,10 +619,10 @@ const HOSTS: SeedHost[] = [
         dtstart: RUSTAFIED_BIWEEKLY_DTSTART,
       };
       const monthlyForced: SeedSchedule = {
-        rrule: "FREQ=MONTHLY;BYDAY=1TH;BYHOUR=15;BYMINUTE=0;BYSECOND=0",
+        rrule: "FREQ=MONTHLY;BYDAY=1TH;BYHOUR=19;BYMINUTE=0;BYSECOND=0",
         timezone: "Europe/London",
         kind: "forced",
-        label: "Monthly map wipe — 1st Thursday 15:00 GMT (Facepunch force wipe)",
+        label: "Monthly force wipe — 1st Thursday 19:00 London",
         dtstart: RUSTAFIED_DTSTART,
       };
       const wThu = weekly("TH", "Thursday");
