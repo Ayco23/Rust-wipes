@@ -94,7 +94,10 @@ const CONNECT_URLS: Record<string, string> = {
   "seed-rustafied-eu-lowpop": "64.40.9.34:28015",
   // EU Long - Small: BM only finds "Long - Small II" — possibly retired. Left blank.
   // EU Small: BM doesn't list a Rustafied EU Small — possibly retired. Left blank.
-  // Enjoy, Lagoon: no IPs provided — left blank intentionally.
+  // Enjoy (BM-sourced 2026-05-15)
+  "seed-enjoy-solo-monthly": "176.9.112.88:28036",
+  "seed-enjoy-solo-duo": "176.9.112.88:28026",
+  // Lagoon: no IP provided — left blank intentionally.
 };
 
 // BestRust: 1st Thursday of the month at 19:45 CEST (= 17:45 UTC).
@@ -819,8 +822,8 @@ const HOSTS: SeedHost[] = [
     website: "https://enjoyrust.com",
     servers: (() => {
       const ENJOY_DTSTART = new Date("2026-04-01T00:00:00Z");
-      // Solo/Duo biweekly anchored at most recent Thursday wipe (May 14, 2026 18:00 CEST = 16:00 UTC).
-      const ENJOY_BIWEEKLY_DTSTART = new Date("2026-05-14T16:00:00Z");
+      // Solo/Duo biweekly anchored at the BM-confirmed next wipe: 2026-05-21 16:00 UTC = 18:00 CEST.
+      const ENJOY_BIWEEKLY_DTSTART = new Date("2026-05-21T16:00:00Z");
       const monthlyForced: SeedSchedule = {
         rrule: "FREQ=MONTHLY;BYDAY=1TH;BYHOUR=20;BYMINUTE=0;BYSECOND=0",
         timezone: "Europe/Paris",
