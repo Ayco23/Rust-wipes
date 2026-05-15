@@ -1,0 +1,67 @@
+// Rust wipes — schema. Final for v1; workers must NOT modify.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Host {
+  id            String   @id @default(cuid())
+  name          String   @unique
+  website       String?
+  discordGuild  String?
+  discordInvite String?
+  servers       Server[]
+  createdAt     DateTime @default(now())
+}
+
+model Server {
+  id                String              @id @default(cuid())
+  host              Host                @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  hostId            String
+  name              String
+  type              String              // "official" | "community" | "modded"
+  playerRestriction String              // "none" | "solo" | "duo" | "trio" | "quad" | "quintet" | "other"
+  region            String?             // "EU" | "NA" | "AS" | "OCE" | etc.
+  tags              String              @default("[]") // JSON array of strings
+  battlemetricsId   String?
+  lastWipeAt        DateTime?
+  notes             String?
+  schedules         WipeScheduleRule[]
+  overrides         WipeEventOverride[]
+  createdAt         DateTime            @default(now())
+
+  @@index([hostId])
+  @@index([type])
+  @@index([playerRestriction])
+}
+
+model WipeScheduleRule {
+  id        String   @id @default(cuid())
+  server    Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  serverId  String
+  rrule     String   // RFC5545 RRULE text, e.g. "FREQ=WEEKLY;BYDAY=TH;BYHOUR=19;BYMINUTE=0"
+  dtstart   DateTime // anchor (UTC); rrule BYHOUR is interpreted in `timezone`
+  timezone  String   @default("UTC") // IANA tz, e.g. "America/New_York"
+  kind      String   // "weekly" | "biweekly" | "forced" | "custom"
+  label     String?
+  createdAt DateTime @default(now())
+
+  @@index([serverId])
+}
+
+model WipeEventOverride {
+  id        String   @id @default(cuid())
+  server    Server   @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  serverId  String
+  occursAt  DateTime // explicit one-off
+  skip      Boolean  @default(false) // if true, suppresses any rule-generated event near this time
+  label     String?
+  createdAt DateTime @default(now())
+
+  @@index([serverId, occursAt])
+}
